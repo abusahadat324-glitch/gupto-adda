@@ -1,0 +1,532 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}html{color-scheme:light}</style>
+<title>Gupto Adda</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Hind+Siliguri:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lock screen is a brand column beside a form card (stacked on phones); chat is one column with a header, a scrolling log and a bottom composer. */
+:root{
+  --bg:#EDF1F4;
+  --surface:#FFFFFF;
+  --field:#F6F8F9;
+  --ink:#101B1C;
+  --muted:#56696A;
+  --line:#D3DCDF;
+  --accent:#0B7A5E;
+  --accent-ink:#FFFFFF;
+  --mine:#0B7A5E;
+  --mine-ink:#FFFFFF;
+  --warn:#9A3412;
+  --name-l:34%;
+  --f-display:"Bricolage Grotesque","Hind Siliguri","Noto Sans Arabic",system-ui,sans-serif;
+  --f-body:"Hind Siliguri","Noto Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1314;--surface:#131C1E;--field:#0F1719;--ink:#E7F0EE;--muted:#92A7A4;--line:#243234;
+    --accent:#37C79A;--accent-ink:#06201A;--mine:#0F6A52;--mine-ink:#F2FBF7;--warn:#F0A070;--name-l:70%;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1314;--surface:#131C1E;--field:#0F1719;--ink:#E7F0EE;--muted:#92A7A4;--line:#243234;
+  --accent:#37C79A;--accent-ink:#06201A;--mine:#0F6A52;--mine-ink:#F2FBF7;--warn:#F0A070;--name-l:70%;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  padding-block:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:var(--bg);color:var(--ink);
+  font:400 16px/1.5 var(--f-body);
+}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.ico{flex:none;color:var(--accent)}
+
+/* ---------- lock screen ---------- */
+#lock{height:100%;overflow-y:auto;padding-block:28px 40px}
+.lock-grid{
+  max-width:960px;margin:0 auto;display:grid;gap:24px;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"brand" "form" "facts";
+}
+@media (min-width:860px){
+  .lock-grid{
+    grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+    grid-template-areas:"brand form" "facts form";
+    column-gap:64px;align-content:start;padding-top:6vh;
+  }
+}
+.brand{grid-area:brand;min-width:0}
+.brand h1{
+  margin:0;font:700 clamp(2.4rem,9vw,3.6rem)/1 var(--f-display);letter-spacing:-.02em;
+  display:flex;align-items:center;gap:12px;
+}
+.brand h1 em{font-style:normal;font-weight:600;color:var(--accent)}
+.brand p{margin:10px 0 0;font-size:1.15rem;color:var(--muted)}
+
+.card{
+  grid-area:form;min-width:0;align-self:start;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-weight:600;font-size:.9rem}
+.input-row{display:flex;gap:8px;min-width:0}
+input[type=text],input[type=password],textarea{
+  width:100%;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font-size:16px;
+}
+.btn{
+  border:1px solid transparent;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;
+  background:var(--accent);color:var(--accent-ink);
+}
+.btn:disabled{opacity:.55;cursor:default}
+.btn-quiet{
+  background:transparent;color:var(--ink);border-color:var(--line);padding:6px 12px;font-weight:500;font-size:.9rem;
+}
+.hint{margin:0;color:var(--muted);font-size:.92rem}
+.err{margin:0;color:var(--warn);font-weight:500;font-size:.92rem;min-height:0}
+.err:empty{display:none}
+
+.facts{grid-area:facts;min-width:0;display:flex;flex-direction:column;gap:16px}
+.facts ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.facts li{color:var(--muted);font-size:.95rem}
+.facts li b{display:block;color:var(--ink);font-weight:600}
+.example{
+  border:1px dashed var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;
+  font:400 .78rem/1.5 var(--f-mono);min-width:0;
+}
+.example .cap{font:600 .7rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.example .row{display:flex;gap:10px;min-width:0}
+.example .row i{flex:none;font-style:normal;color:var(--muted);width:5.5em}
+.example .row span{min-width:0;overflow-wrap:anywhere}
+
+/* ---------- chat ---------- */
+#chat{height:100%;display:flex;flex-direction:column;min-height:0}
+.top{border-bottom:1px solid var(--line)}
+.top-in{
+  max-width:720px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding-block:12px;
+}
+.top .title{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;font:700 1.2rem/1.2 var(--f-display);letter-spacing:-.01em}
+.chip{
+  font:500 .72rem var(--f-mono);letter-spacing:.04em;color:var(--muted);
+  border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap;
+}
+.chip b{font-weight:500;color:var(--ink)}
+#banner{
+  max-width:720px;margin:8px auto 0;padding:8px 12px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--warn);color:var(--warn);font-size:.9rem;
+}
+#scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-block:14px}
+#list{max-width:720px;margin:0 auto;display:flex;flex-direction:column}
+.day{
+  align-self:center;margin:14px 0 6px;font:500 .72rem var(--f-mono);letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);
+}
+.note{align-self:center;color:var(--muted);padding:48px 12px;text-align:center;max-width:32ch}
+.msg{max-width:min(82%,520px);display:flex;flex-direction:column;margin-top:2px;min-width:0}
+.msg.first{margin-top:10px}
+.msg.mine{align-self:flex-end;align-items:flex-end}
+.who{font-weight:600;font-size:.8rem;color:hsl(var(--h,160) 55% var(--name-l));margin:0 4px 2px}
+.bubble{padding:7px 12px 5px;border-radius:16px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.mine .bubble{background:var(--mine);color:var(--mine-ink);border-color:transparent}
+.bad .bubble{background:transparent;border-style:dashed;color:var(--muted);font-size:.88rem}
+.text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.meta{display:flex;gap:10px;justify-content:flex-end;font:400 .68rem var(--f-mono);opacity:.72;margin-top:2px}
+.del{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer}
+
+.dock{border-top:1px solid var(--line)}
+#composer{max-width:720px;margin:0 auto;display:flex;gap:8px;align-items:flex-end;padding-block:10px}
+#msg{resize:none;max-height:140px;line-height:1.4}
+#composer .btn{flex:none}
+
+@media (prefers-reduced-motion:no-preference){
+  .btn{transition:opacity .15s}
+}
+</style>
+
+<main id="lock">
+  <div class="lock-grid">
+    <div class="brand">
+      <h1>
+        <svg class="ico" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Gupto <em>Adda</em></span>
+      </h1>
+      <p lang="bn">শুধু আমাদের আড্ডা</p>
+    </div>
+
+    <form class="card" id="unlock" autocomplete="off">
+      <div class="field">
+        <label for="name">Your name</label>
+        <input type="text" id="name" dir="auto" maxlength="24" autocomplete="nickname" placeholder="What your friends call you">
+      </div>
+      <div class="field">
+        <label for="pass">Passphrase</label>
+        <div class="input-row">
+          <input type="password" id="pass" autocomplete="current-password" spellcheck="false" autocapitalize="off">
+          <button type="button" class="btn btn-quiet" id="peek" aria-pressed="false">Show</button>
+        </div>
+      </div>
+      <p class="hint" id="hint" role="status">Getting ready…</p>
+      <p class="err" id="err" role="alert"></p>
+      <button type="submit" class="btn" id="go" disabled>Unlock</button>
+    </form>
+
+    <div class="facts">
+      <ul>
+        <li><b>Locked on your device.</b>Every message is encrypted with AES-256-GCM in your browser before it is saved.</li>
+        <li><b>One passphrase, one room.</b>For a private chat, share a passphrase with one friend. For a group, share it with everyone.</li>
+        <li><b>The passphrase stays with you.</b>It is never sent anywhere or stored. If everyone forgets it, the messages cannot be recovered.</li>
+        <li><b>What stays visible.</b>The time of each message and how many there are. Names and text do not.</li>
+      </ul>
+      <div class="example" id="example" hidden>
+        <div class="cap">Example with a throwaway key</div>
+        <div class="row"><i>You type</i><span>kemon acho?</span></div>
+        <div class="row"><i>Saved as</i><span id="exCt"></span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="chat" hidden>
+  <header class="top">
+    <div class="top-in">
+      <div class="title">
+        <svg class="ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Gupto Adda</span>
+      </div>
+      <span class="chip" title="Everyone with the same passphrase sees the same code">Key <b id="fp"></b></span>
+      <button type="button" class="btn btn-quiet" id="lockBtn">Lock</button>
+    </div>
+    <div id="banner" role="status" hidden></div>
+  </header>
+
+  <div id="scroll">
+    <div id="list" role="log" aria-live="polite"></div>
+  </div>
+
+  <div class="dock">
+    <form id="composer" autocomplete="off">
+      <label for="msg" hidden>Message</label>
+      <textarea id="msg" dir="auto" rows="1" maxlength="2000" placeholder="Write a message"></textarea>
+      <button type="submit" class="btn" id="send">Send</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* Paste your Supabase Project URL and anon/publishable key between the quotes. */
+var SB_URL='https://xucokhcxtyplkwdtehyk.supabase.co';
+var SB_KEY='sb_publishable_OitIpWsvLmYtBfWYMz92RQ_lLCgnEsj';
+
+var $=function(id){return document.getElementById(id);};
+
+//#crypto-start
+var ITER=310000, enc=new TextEncoder(), dec=new TextDecoder();
+function b64(buf){var u=new Uint8Array(buf),s='';for(var i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s);}
+function unb64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+async function derive(pass){
+  var base=await crypto.subtle.importKey('raw',enc.encode(pass.normalize('NFKC')),'PBKDF2',false,['deriveBits']);
+  var bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:enc.encode('gupto-adda/v2'),iterations:ITER},base,448);
+  var u=new Uint8Array(bits);
+  var key=await crypto.subtle.importKey('raw',u.slice(0,32),'AES-GCM',false,['encrypt','decrypt']);
+  function hx(a){return Array.from(a).map(function(x){return x.toString(16).padStart(2,'0');}).join('');}
+  var f=hx(u.slice(32,36)).toUpperCase();
+  return {key:key,fp:f.slice(0,4)+' '+f.slice(4),rid:hx(u.slice(36,56))};
+}
+async function seal(key,obj,aad){
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv,additionalData:enc.encode(aad)},key,enc.encode(JSON.stringify(obj)));
+  return {iv:b64(iv),ct:b64(ct)};
+}
+async function openBox(key,iv,ct,aad){
+  var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv),additionalData:enc.encode(aad)},key,unb64(ct));
+  return JSON.parse(dec.decode(pt));
+}
+//#crypto-end
+
+
+function makeDb(base,key){
+  base=base.replace(/\/+$/,'')+'/rest/v1/';
+  function fail(code){var e=new Error(code);e.code=code;return e;}
+  function bad(r){return fail(r.status===401||r.status===403?'denied':'unavailable');}
+  async function call(path,opt){
+    opt=opt||{};opt.headers=Object.assign({apikey:key},opt.headers||{});
+    try{return await fetch(base+path,opt);}catch(e){throw fail('unavailable');}
+  }
+  function snap(id,val){
+    return {id:id,exists:val!=null,data:function(){return val==null?undefined:val;},metadata:{hasPendingWrites:false,fromCache:false}};
+  }
+  var JSONH={'Content-Type':'application/json',Prefer:'return=minimal'};
+  return {
+    doc:function(path){
+      return {
+        get:async function(){
+          var r=await call('room?select=salt,iter,iv,ct&id=eq.1');if(!r.ok)throw bad(r);
+          var rows=await r.json();
+          return snap('room',rows&&rows.length?rows[0]:null);
+        },
+        createIfAbsent:async function(d){
+          var r=await call('room',{method:'POST',headers:JSONH,body:JSON.stringify({id:1,salt:d.salt,iter:d.iter,iv:d.iv,ct:d.ct,created:d.created})});
+          if(r.status===409)return false;
+          if(!r.ok)throw bad(r);
+          return true;
+        }
+      };
+    },
+    collection:function(name){
+      var api={
+        orderBy:function(){return api;},
+        limit:function(){return api;},
+        add:async function(d){
+          var r=await call('messages',{method:'POST',headers:JSONH,body:JSON.stringify({room:state.rid,t:d.t,iv:d.iv,ct:d.ct})});
+          if(!r.ok)throw bad(r);
+          if(state.poke)state.poke();
+        },
+        onSnapshot:function(next,error){
+          var stop=false,busy=false,last=null,failed=false,timer=null;
+          async function tick(){
+            if(stop||busy)return;
+            busy=true;clearTimeout(timer);
+            try{
+              var r=await call('messages?select=id,t,iv,ct&room=eq.'+encodeURIComponent(state.rid)+'&order=id.desc&limit=300');
+              if(!r.ok)throw bad(r);
+              var txt=await r.text();failed=false;
+              if(txt!==last){
+                last=txt;
+                var docs=(JSON.parse(txt)||[]).map(function(x){return snap(String(x.id),{t:x.t,iv:x.iv,ct:x.ct});});
+                if(!stop)next({docs:docs});
+              }
+            }catch(e){if(!failed&&!stop&&error)error(e);failed=true;}
+            busy=false;
+            if(!stop)timer=setTimeout(tick,document.hidden?8000:2500);
+          }
+          state.poke=tick;tick();
+          return function(){stop=true;clearTimeout(timer);if(state.poke===tick)state.poke=null;};
+        }
+      };
+      return api;
+    }
+  };
+}
+
+var state={
+  db:null,uid:null,key:null,fp:'',name:'',meta:null,roomExists:null,failed:false,slow:false,
+  busy:false,seq:0,cache:new Map(),unsub:null,rendered:false,
+  tabId:'t'+Math.random().toString(36).slice(2,10)
+};
+function myId(){return state.uid||state.tabId;}
+function userErr(m){var e=new Error(m);e.user=true;return e;}
+function friendly(e){
+  var c=e&&e.code;
+  if(c==='denied')return 'The server refused this. Check the table policies.';
+  if(c==='quota_exceeded')return 'The chat storage is full. Ask the owner to make room.';
+  if(c==='invalid_argument')return 'This view can only read. Ask the owner to make you a Contributor.';
+  if(c==='revoked')return 'Your access to this chat was removed.';
+  if(c==='resource_exhausted')return 'Too many requests. Wait a moment and try again.';
+  return 'Could not reach the chat. Check your connection and try again.';
+}
+
+/* ---------- lock screen ---------- */
+function setErr(t){$('err').textContent=t||'';}
+function renderHint(){
+  var hint=$('hint'),go=$('go');
+  if(state.busy)return;
+  if(!state.db){
+    hint.textContent='The chat server is not set up yet. Paste your Supabase URL and key at the top of the script in this file.';
+    go.disabled=true;go.textContent='Open chat';return;
+  }
+  hint.textContent='The same passphrase opens the same room. Use at least 10 characters, and a different passphrase for each private chat or group.';
+  go.disabled=false;go.textContent='Open chat';
+}
+async function unlock(ev){
+  ev.preventDefault();
+  if(state.busy||!state.db)return;
+  setErr('');
+  var name=$('name').value.trim().slice(0,24),pass=$('pass').value;
+  if(!name){setErr('Enter the name your friends will see.');$('name').focus();return;}
+  if(pass.length<10){setErr('Use at least 10 characters. A few random words work well.');$('pass').focus();return;}
+  state.busy=true;$('go').disabled=true;$('go').textContent='Working…';
+  try{
+    var r=await derive(pass);
+    state.key=r.key;state.fp=r.fp;state.rid=r.rid;state.name=name;
+    try{localStorage.setItem('gupto-name',name);}catch(e){}
+    state.busy=false;
+    enterChat();
+    return;
+  }catch(e){setErr('Could not open the chat. Try again.');}
+  state.busy=false;renderHint();
+}
+async function showExample(){
+  try{
+    var k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    var b=await seal(k,{m:'kemon acho?'},'0');
+    $('exCt').textContent=b.iv.slice(0,8)+b.ct;
+    $('example').hidden=false;
+  }catch(e){}
+}
+
+/* ---------- chat ---------- */
+var tf=new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'});
+var df=new Intl.DateTimeFormat(undefined,{weekday:'short',day:'numeric',month:'short'});
+function dayLabel(t){
+  var d=new Date(t),n=new Date(),y=new Date(Date.now()-86400000);
+  if(d.toDateString()===n.toDateString())return 'Today';
+  if(d.toDateString()===y.toDateString())return 'Yesterday';
+  return df.format(d);
+}
+function hue(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return h;}
+var bannerTimer=null;
+function banner(t){
+  var b=$('banner');b.textContent=t;b.hidden=false;
+  clearTimeout(bannerTimer);bannerTimer=setTimeout(function(){b.hidden=true;},7000);
+}
+function note(t){
+  var p=document.createElement('p');p.className='note';p.textContent=t;
+  $('list').replaceChildren(p);
+}
+function enterChat(){
+  $('pass').value='';$('lock').hidden=true;$('chat').hidden=false;$('fp').textContent=state.fp;
+  $('banner').hidden=true;
+  state.rendered=false;state.cache.clear();state.seq++;
+  note('Loading messages…');
+  state.unsub=state.db.collection('messages').orderBy('t','desc').limit(300).onSnapshot(
+    function(snap){processSnap(snap);},
+    function(e){banner(friendly(e));}
+  );
+  $('msg').focus();
+}
+function lockNow(){
+  if(state.unsub){state.unsub();state.unsub=null;}
+  state.key=null;state.seq++;state.cache.clear();state.rendered=false;
+  $('list').replaceChildren();$('msg').value='';growBox();
+  $('chat').hidden=true;$('lock').hidden=false;setErr('');
+  renderHint();$('pass').focus();
+}
+async function processSnap(snap){
+  var my=++state.seq,key=state.key;
+  if(!key)return;
+  var docs=snap.docs.slice().reverse();
+  var items=await Promise.all(docs.map(async function(d){
+    var data=d.data()||{};
+    var sig=d.id+':'+data.iv+':'+data.t;
+    var hit=state.cache.get(sig);
+    if(!hit){
+      try{
+        var p=await openBox(key,data.iv,data.ct,String(data.t));
+        hit={ok:true,u:String(p.u||''),n:String(p.n||'').slice(0,24),m:String(p.m||'')};
+      }catch(e){hit={ok:false};}
+      state.cache.set(sig,hit);
+    }
+    return Object.assign({id:d.id,t:Number(data.t)||0,pending:!!d.metadata.hasPendingWrites},hit);
+  }));
+  if(my!==state.seq||state.key!==key)return;
+  render(items);
+}
+function render(items){
+  var sc=$('scroll'),list=$('list');
+  var stick=!state.rendered||sc.scrollHeight-sc.scrollTop-sc.clientHeight<96;
+  if(!items.length){
+    note('No messages yet. Say hello. If your friend does not see you, check that the Key code at the top is the same on both phones.');
+    state.rendered=true;return;
+  }
+  var frag=document.createDocumentFragment(),prev=null,lastDay='';
+  items.forEach(function(it){
+    var day=new Date(it.t).toDateString();
+    if(day!==lastDay){
+      var dv=document.createElement('div');dv.className='day';dv.textContent=dayLabel(it.t);frag.appendChild(dv);
+      lastDay=day;prev=null;
+    }
+    var first=!prev||!prev.ok||!it.ok||prev.u!==it.u||it.t-prev.t>300000;
+    var mine=it.ok&&it.u===myId();
+    var row=document.createElement('div');
+    row.className='msg'+(first?' first':'')+(mine?' mine':'')+(it.ok?'':' bad');
+    if(it.ok&&!mine&&first){
+      var who=document.createElement('div');who.className='who';who.dir='auto';who.textContent=it.n||'Someone';
+      who.style.setProperty('--h',String(hue(it.u)));row.appendChild(who);
+    }
+    var bub=document.createElement('div');bub.className='bubble';
+    var tx=document.createElement('p');tx.className='text';tx.dir='auto';
+    tx.textContent=it.ok?it.m:'A message here could not be opened with your key.';
+    bub.appendChild(tx);
+    if(it.ok){
+      var meta=document.createElement('div');meta.className='meta';
+      var tm=document.createElement('span');tm.textContent=it.pending?'sending…':tf.format(new Date(it.t));
+      meta.appendChild(tm);
+      bub.appendChild(meta);
+    }
+    row.appendChild(bub);frag.appendChild(row);
+    prev=it;
+  });
+  list.replaceChildren(frag);
+  state.rendered=true;
+  var last=items[items.length-1];
+  if(stick||(last.ok&&last.u===myId()))sc.scrollTop=sc.scrollHeight;
+}
+async function send(ev){
+  if(ev)ev.preventDefault();
+  var ta=$('msg'),text=ta.value.trim();
+  if(!text||!state.key||!state.db)return;
+  var t=Date.now();
+  ta.value='';growBox();
+  try{
+    var b=await seal(state.key,{u:myId(),n:state.name,m:text.slice(0,2000)},String(t));
+    await state.db.collection('messages').add({v:1,t:t,iv:b.iv,ct:b.ct});
+  }catch(e){
+    if(!ta.value){ta.value=text;growBox();}
+    banner(friendly(e));
+  }
+}
+function growBox(){
+  var ta=$('msg');ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,140)+'px';
+}
+
+/* ---------- wiring ---------- */
+$('unlock').addEventListener('submit',unlock);
+$('peek').addEventListener('click',function(){
+  var p=$('pass'),show=p.type==='password';
+  p.type=show?'text':'password';this.textContent=show?'Hide':'Show';this.setAttribute('aria-pressed',String(show));
+});
+$('lockBtn').addEventListener('click',lockNow);
+$('composer').addEventListener('submit',send);
+$('msg').addEventListener('input',growBox);
+$('msg').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&window.matchMedia('(pointer:fine)').matches){e.preventDefault();send();}
+});
+$('list').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-del]');if(!b)return;
+  if(b.dataset.armed){
+    state.db.doc('messages/'+b.dataset.del).delete().catch(function(err){banner(friendly(err));});
+    return;
+  }
+  b.dataset.armed='1';b.textContent='Delete?';
+  setTimeout(function(){if(b.isConnected){delete b.dataset.armed;b.textContent='Delete';}},3000);
+});
+
+async function boot(){
+  try{var n=localStorage.getItem('gupto-name');if(n)$('name').value=n;}catch(e){}
+  showExample();
+  var uid=null;
+  try{
+    uid=localStorage.getItem('gupto-uid');
+    if(!uid){uid='u'+b64(crypto.getRandomValues(new Uint8Array(9))).replace(/[^A-Za-z0-9]/g,'x');localStorage.setItem('gupto-uid',uid);}
+  }catch(e){}
+  state.uid=uid;
+  if(!/^https:\/\/.+/.test(SB_URL)||SB_KEY.indexOf('PASTE')===0){renderHint();return;}
+  state.db=makeDb(SB_URL,SB_KEY);
+  renderHint();
+}
+boot();
+})();
+</script>
